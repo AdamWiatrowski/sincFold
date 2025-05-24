@@ -128,8 +128,17 @@ def mcc(pred, ref):
     fp = pred.sum() - tp
     fn = ref.sum() - tp
     tn = np.logical_and(np.logical_not(pred), np.logical_not(ref)).sum()
+
+    ppv = tp / (tp + fp + 1e-8)
+    sty = tp / (tp + fn + 1e-8)
+
+    tpr = tp / (tp + fn + 1e-8)
+    tnr = tn / (tn + fp + 1e-8)
+
     mcc = (tp * tn - fp * fn) / np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn) + 1e-8)
-    return mcc
+    return mcc, ppv, tpr, tnr
+    # mcc = np.sqrt(ppv * sty) | estimation
+    # https://rnajournal.cshlp.org/content/15/10/1875.full.pdf
 
 
 def get_graph_kernel(kernel, n_iter=5, normalize=True):

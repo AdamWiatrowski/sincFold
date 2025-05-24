@@ -5,7 +5,7 @@ from tqdm import tqdm
 import pandas as pd
 import math
 
-from sincfold.metrics import contact_f1
+from sincfold.metrics import contact_f1, mcc
 from sincfold.utils import mat2bp, postprocessing
 from sincfold._version import __version__
 
@@ -262,7 +262,13 @@ class SincFold(nn.Module):
 
     def test(self, loader):
         self.eval()
-        metrics = {"loss": 0, "f1": 0, "f1_post": 0}
+        metrics = {"loss": 0, 
+                   "f1": 0,
+                   "f1_post": 0,
+                    "ppv": 0,
+                    "tpr": 0,
+                    "tnr": 0,
+                    "inf": 0}
 
         if self.verbose:
             loader = tqdm(loader)
@@ -286,6 +292,12 @@ class SincFold(nn.Module):
                 f1 = contact_f1(y.cpu(), y_pred.cpu(), lengths, th=self.output_th, reduce=True, method="triangular")
                 f1_post = contact_f1(
                     y.cpu(), y_pred_post.cpu(), lengths, th=self.output_th, reduce=True, method="triangular")
+                
+                inf, ppv, tpr, tnr = mcc(y.cpu(), y_pred_post.cpu())
+                metrics["ppv"] += ppv
+                metrics["tpr"] += tpr
+                metrics["tnr"] += tnr
+                metrics["inf"] += inf
 
                 metrics["f1"] += f1
                 metrics["f1_post"] += f1_post
