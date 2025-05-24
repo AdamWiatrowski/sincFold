@@ -44,7 +44,7 @@ def main():
     np.random.seed(42)
 
     if args.command == "train": 
-        train(args.train_file, config, args.out_path,  args.valid_file, args.j)
+        train(args.train_file, args.model_weights, config, args.out_path,  args.valid_file, args.j)
 
     if args.command == "test":
         test(args.test_file, args.model_weights, args.out_path, config, args.j)
@@ -52,7 +52,7 @@ def main():
     if args.command == "pred":
         pred(args.pred_file, model_weights=args.model_weights, out_path=args.out_path, logits=args.logits, config=config, nworkers=args.j, draw=args.draw, draw_resolution=args.draw_resolution)    
         
-def train(train_file, config={}, out_path=None, valid_file=None, nworkers=2, verbose=True):
+def train(train_file, model_weights=None, config={}, out_path=None, valid_file=None, nworkers=2, verbose=True):
     
     
     if out_path is None:
@@ -100,7 +100,8 @@ def train(train_file, config={}, out_path=None, valid_file=None, nworkers=2, ver
         collate_fn=pad_batch,
     )
 
-    net = sincfold(train_len=len(train_loader), **config)
+    net = sincfold(weights=model_weights, train_len=len(train_loader), **config)
+    
     
     best_f1, patience_counter = -1, 0
     patience = config["patience"] if "patience" in config else 30

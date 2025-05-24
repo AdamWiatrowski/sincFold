@@ -46,6 +46,10 @@ def parser():
         default=1000,
         help="Maximum number of training epochs",
     )
+    parser_train.add_argument(
+        "-w", type=str, dest="model_weights", help="Trained model weights"
+    )
+    
     parser.add_argument(
         "--no-cache",
         action="store_true", help="Cache of data for training (default: cache is used)",
