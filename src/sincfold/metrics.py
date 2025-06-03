@@ -122,21 +122,44 @@ def f1_strict(ref_bp, pre_bp):
 
     return tpr, pre, f1
 
-def mcc(pred, ref):
+def mcc(ref_batch, pred_batch, L, th = 0.5, reduce = True):
     """pred, ref are 2D binary matrices"""
-    tp = np.logical_and(pred, ref).sum()
-    fp = pred.sum() - tp
-    fn = ref.sum() - tp
-    tn = np.logical_and(np.logical_not(pred), np.logical_not(ref)).sum()
+    metrics = []
 
-    ppv = tp / (tp + fp + 1e-8)
-    sty = tp / (tp + fn + 1e-8)
+    if isinstance(ref_batch, float) or ref_batch.ndim < 3:
+        ref_batch  = [ref_batch]
+        pred_batch = [pred_batch]
+        L          = [L]
 
-    tpr = tp / (tp + fn + 1e-8)
-    tnr = tn / (tn + fp + 1e-8)
+    for ref, pred, l in zip(ref_batch, pred_batch, L):
+        ind = (ref != -1)
+        pred  = pred[ind].view(l, l)
+        ref   = ref[ind].view(l, l)
 
-    mcc = (tp * tn - fp * fn) / np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn) + 1e-8)
-    return mcc, ppv, tpr, tnr
+        tri = np.triu_indices(l, k=1)
+        ref  = ref[tri]
+        pred = pred[tri]
+
+        pred = tr.sigmoid(pred)
+        pred_bin = (pred > th)
+
+        ref_bin  = ref
+        tp = np.logical_and(pred_bin, ref_bin).sum()
+        fp = pred_bin.sum() - tp
+        fn = ref_bin.sum()  - tp
+        tn = pred_bin.size - tp - fp - fn
+
+        ppv = tp / (tp + fp + 1e-8)
+        tpr = tp / (tp + fn + 1e-8)
+        tnr = tn / (tn + fp + 1e-8)
+        mcc = (tp * tn - fp * fn) / np.sqrt(
+              (tp + fp) * (tp + fn) * (tn + fp) * (tn + fn) + 1e-8)
+
+        metrics.append((mcc, ppv, tpr, tnr))
+    if reduce:
+        return tuple(float(np.mean([m[i] for m in metrics])) for i in range(4))
+    else:
+        return metrics
     # mcc = np.sqrt(ppv * sty) | estimation
     # https://rnajournal.cshlp.org/content/15/10/1875.full.pdf
 

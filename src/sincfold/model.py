@@ -279,7 +279,7 @@ class SincFold(nn.Module):
                 batch.pop("contact")
                 lengths = batch["length"]
                 
-
+                
                 y_pred = self(batch)
                 loss = self.loss_func(y_pred, y)
                 metrics["loss"] += loss.item()
@@ -292,8 +292,9 @@ class SincFold(nn.Module):
                 f1 = contact_f1(y.cpu(), y_pred.cpu(), lengths, th=self.output_th, reduce=True, method="triangular")
                 f1_post = contact_f1(
                     y.cpu(), y_pred_post.cpu(), lengths, th=self.output_th, reduce=True, method="triangular")
-                
-                inf, ppv, tpr, tnr = mcc(y.cpu(), y_pred_post.cpu())
+
+                inf, ppv, tpr, tnr = mcc(y.cpu(), y_pred_post.cpu(), lengths, th=self.output_th, reduce=True)
+
                 metrics["ppv"] += ppv
                 metrics["tpr"] += tpr
                 metrics["tnr"] += tnr
